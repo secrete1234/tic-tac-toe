@@ -8,5 +8,4 @@ $currentData = file_get_contents($file);
 $currentData .= "Name: $name, IP Address: $ipAddress\n";
 file_put_contents($file, $currentData);
 
-echo "Data stored successfully.";
 ?>
