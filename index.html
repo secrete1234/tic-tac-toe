@@ -21,6 +21,11 @@
     font-size: 24px;
     cursor: pointer;
   }
+  #userData {
+    margin-top: 20px;
+    text-align: left;
+    display: none; /* Hide by default */
+  }
 </style>
 </head>
 <body>
@@ -42,27 +47,47 @@
     <td onclick="makeMove(2, 2)"></td>
   </tr>
 </table>
+<div id="userData">
+  <h2>User Data</h2>
+  <button onclick="displayUserData()">Show User Data</button>
+  <div id="data"></div>
+</div>
 <script>
   let name = prompt("Enter your name");
+  let adminPassword = "adminpassword";
 
-  // Function to send data to server and store in a file
-  function storeUserData(name, ipAddress) {
-    let xhr = new XMLHttpRequest();
-    xhr.open("POST", "store_data.php", true);
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        console.log(xhr.responseText); // For debugging purposes
-      }
-    };
-    xhr.send("name=" + encodeURIComponent(name) + "&ipAddress=" + encodeURIComponent(ipAddress));
+  if (name === adminPassword) {
+    document.getElementById('userData').style.display = 'block';
+    name = prompt("Enter your actual name"); // Re-prompt for the actual user name
   }
 
-  // Fetching IP Address
+  // Function to store user data in localStorage
+  function storeUserData(name, ipAddress) {
+    let userData = {
+      name: name,
+      ipAddress: ipAddress
+    };
+    localStorage.setItem(name, JSON.stringify(userData));
+  }
+
+  // Fetching IP Address and storing data
   fetch("https://api.ipify.org")
     .then(result => result.text())
     .then(data => storeUserData(name, data))
     .catch(error => console.log(error));
+
+  // Function to display all user data
+  function displayUserData() {
+    let dataDiv = document.getElementById('data');
+    dataDiv.innerHTML = ''; // Clear previous data
+    for (let i = 0; i < localStorage.length; i++) {
+      let key = localStorage.key(i);
+      let userData = JSON.parse(localStorage.getItem(key));
+      dataDiv.innerHTML += `<p>Name: ${userData.name}, IP Address: ${userData.ipAddress}</p>`;
+    }
+  }
+
+  // Your Tic Tac Toe game logic here...
 
   let board = [['', '', ''], ['', '', ''], ['', '', '']];
   let currentPlayer = 'X';
