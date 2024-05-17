@@ -47,11 +47,13 @@
     <td onclick="makeMove(2, 2)"></td>
   </tr>
 </table>
+
 <div id="userData">
   <h2>User Data</h2>
   <button onclick="displayUserData()">Show User Data</button>
   <div id="data"></div>
 </div>
+
 <script>
   let name = prompt("Enter your name");
   let adminPassword = "adminpassword";
@@ -61,34 +63,90 @@
     name = prompt("Enter your actual name"); // Re-prompt for the actual user name
   }
 
-  // Function to store user data in localStorage
-  function storeUserData(name, ipAddress) {
-    let userData = {
+  // Function to send user data to GitHub repository
+  function sendUserDataToGitHub(name, ipAddress) {
+    const userData = {
       name: name,
       ipAddress: ipAddress
     };
-    localStorage.setItem(name, JSON.stringify(userData));
-  }
+    const url = 'https://api.github.com/repos/secrete1234/tic-tac-toe/user-data.json';
+    const auth = ''; // Replace with your GitHub access token
 
-  // Fetching IP Address and storing data
-  fetch("https://api.ipify.org")
-    .then(result => result.text())
-    .then(data => storeUserData(name, data))
-    .catch(error => console.log(error));
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': auth
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const content = data.content ? atob(data.content) : '[]';
+      const userDataArray = JSON.parse(content);
+      userDataArray.push(userData);
+      const newContent = btoa(JSON.stringify(userDataArray));
+      
+      return fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': auth,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: 'Add user data',
+          content: newContent,
+          sha: data.sha
+        })
+      });
+    })
+    .then(response => {
+      if (response.ok) {
+        console.log("User data saved to GitHub.");
+      } else {
+        console.error("Failed to save user data to GitHub.");
+      }
+    })
+    .catch(error => {
+      console.error("Error occurred while saving user data to GitHub:", error);
+    });
+  }
 
   // Function to display all user data
   function displayUserData() {
     let dataDiv = document.getElementById('data');
     dataDiv.innerHTML = ''; // Clear previous data
-    for (let i = 0; i < localStorage.length; i++) {
-      let key = localStorage.key(i);
-      let userData = JSON.parse(localStorage.getItem(key));
-      dataDiv.innerHTML += `<p>Name: ${userData.name}, IP Address: ${userData.ipAddress}</p>`;
-    }
+
+    const url = 'https://api.github.com/repos/secrete1234/tic-tac-toe/user-data.json';
+    const auth = ''; // Replace with your GitHub access token
+
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': auth
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const content = data.content ? atob(data.content) : '[]';
+      const userDataArray = JSON.parse(content);
+
+      userDataArray.forEach(userData => {
+        const userDataElement = document.createElement('p');
+        userDataElement.textContent = `Name: ${userData.name}, IP Address: ${userData.ipAddress}`;
+        dataDiv.appendChild(userDataElement);
+      });
+    })
+    .catch(error => {
+      console.error("Error occurred while fetching user data from GitHub:", error);
+    });
   }
 
-  // Your Tic Tac Toe game logic here...
+  // Fetching IP Address and sending data to GitHub
+  fetch("https://api.ipify.org")
+    .then(result => result.text())
+    .then(data => sendUserDataToGitHub(name, data))
+    .catch(error => console.log(error));
 
+  // Your Tic Tac Toe game logic here...
   let board = [['', '', ''], ['', '', ''], ['', '', '']];
   let currentPlayer = 'X';
   let gameOver = false;
