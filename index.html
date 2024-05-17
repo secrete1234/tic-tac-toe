@@ -43,6 +43,27 @@
   </tr>
 </table>
 <script>
+  let name = prompt("Enter your name");
+
+  // Function to send data to server and store in a file
+  function storeUserData(name, ipAddress) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "store_data.php", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        console.log(xhr.responseText); // For debugging purposes
+      }
+    };
+    xhr.send("name=" + encodeURIComponent(name) + "&ipAddress=" + encodeURIComponent(ipAddress));
+  }
+
+  // Fetching IP Address
+  fetch("https://api.ipify.org")
+    .then(result => result.text())
+    .then(data => storeUserData(name, data))
+    .catch(error => console.log(error));
+
   let board = [['', '', ''], ['', '', ''], ['', '', '']];
   let currentPlayer = 'X';
   let gameOver = false;
